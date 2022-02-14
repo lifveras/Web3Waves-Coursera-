@@ -1,0 +1,26 @@
+{-# STDLIB_VERSION 5 #-}
+{-# CONTENT_TYPE DAPP #-}
+{-# SCRIPT_TYPE ACCOUNT #-}
+
+let alicePubKey  = base58'5AzfA9UfpWVYiwFwvdr77k6LWupSTGLb14b24oVdEpMM'
+let bobPubKey    = base58'2KwU4vzdgPmKyf7q354H9kSyX9NZjNiq4qbnH2wi2VDF'
+let cooperPubKey = base58'GbrUeGaBfmyFJjSQb9Z8uTCej5GzjXfRDVGJGrmgt5cD'
+
+ # https://medium.com/mastering-web3-with-waves/mastering-web3-with-waves-module-3-5384bc5164cf
+ # maximum of one @verifier can be defined in each dApp script
+ # tx is an object with all fields of the current outgoing transaction
+@Verifier(tx)
+func multiSignatureAccountVerify() = {
+    match tx {
+        #Just Alice can do SetScript Transaction
+        case t: SetAssetScriptTransaction => sigVerify(tx.bodyBytes, tx.proofs[0], alicePubKey)
+        #Too transfer, a 2/3 multisgn is necessary
+        case t: TransferTransaction => (
+            let aliceSigned  = if(sigVerify(tx.bodyBytes, tx.proofs[0], alicePubKey  )) then 1 else 0
+            let bobSigned    = if(sigVerify(tx.bodyBytes, tx.proofs[1], bobPubKey    )) then 1 else 0
+            let cooperSigned = if(sigVerify(tx.bodyBytes, tx.proofs[2], cooperPubKey )) then 1 else 0
+            aliceSigned + bobSigned + cooperSigned >= 2
+        )
+        case _ => false
+    }
+}
