@@ -1,0 +1,35 @@
+{-# STDLIB_VERSION 3 #-}
+{-# CONTENT_TYPE DAPP #-}
+{-# SCRIPT_TYPE ACCOUNT #-}
+
+###Create a Ride script with @Callable function which accepts a token from Task 1 and saves caller address in dApp storage.
+let assetIdMitok = "BbQo2pnYbeYW6rXPYUL3J2oEYYKh8fJ1pJjMCCzDtaSv"
+func getKeyAddressSender(tokenId: String) = tokenId + "_sender"
+
+@Callable(i)
+func operationWithTokenMitok() = {
+  let pmt = extract(i.payment)
+  let assetId = pmt.assetId.extract()
+  let assetDetails = assetInfo(assetId).extract()
+
+  if (!isDefined(assetId)) then throw("No asset was send.")
+  else if( pmt.amount < 0) then throw("It is a insufficient quantity of tokens")
+  else if(assetDetails.decimals != 0) then throw("It is not a token")
+  else if(toBase58String(assetDetails.id) != assetIdMitok) then throw("We not accept this token")
+  else{
+    let callerAddrKey = getKeyAddressSender(toBase58String(assetId))
+    let callerAddrValue = toBase58String(i.caller.bytes)
+    ScriptResult(
+      WriteSet([
+        DataEntry(callerAddrKey, callerAddrValue)
+      ]),
+      TransferSet([
+        ScriptTransfer(this, pmt.amount, assetId)
+      ])
+    )
+  }
+}
+
+@Verifier(tx)
+func verify() = true
+        
