@@ -1,0 +1,10 @@
+{-# STDLIB_VERSION 3 #-}
+{-# CONTENT_TYPE EXPRESSION #-}
+{-# SCRIPT_TYPE ASSET #-}
+
+match (tx) {
+    case i:InvokeScriptTransaction => {
+        i.dApp == addressFromStringValue("3N81Dk1WuUv7UKt3inqWVYN81J8VHjoV3MC")
+    }
+    case _ => false
+}
